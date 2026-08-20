@@ -26,7 +26,7 @@
 - **Resolution:** VS Code defaulted to Windows PowerShell instead of the Ubuntu terminal. Since Node and Redis were installed inside Ubuntu, PowerShell couldn't find them. I switched the VS Code terminal profile to "Ubuntu (WSL)" / Bash.
 - **Time lost:** 15 min
 
-### Entry 3
+### Entry 4
 - **Time:** 11:30 AM
 - **What I tried:** Running node test.js to verify Bull was installed.
 - **Error / Blocker:** npm : Error: Cannot find module '/root/meridian-inventory-sync/test.js'
@@ -34,10 +34,18 @@
 - **Resolution:** The test.js file hadn't actually been created in the Ubuntu file system yet. I used the nano test.js command directly in the Ubuntu terminal to create the file, paste the code, save (Ctrl+O, Enter), and exit (Ctrl+X). Running node test.js then returned the successful PONG equivalent message.
 - **Time lost:** 10 min
 
+### Entry 5
+- **Time:** 12:05 PM
+- **What I tried:** Pushing my updated code to GitHub from the Ubuntu terminal.
+- **Error / Blocker:** Git asked for my GitHub username and password every single time I tried to push.
+- **What I attempted:** Entered my normal GitHub password.
+- **Resolution:**  GitHub deprecated standard passwords for terminal pushes. I learned I needed to use a Personal Access Token (PAT). I configured Git to permanently store my credentials using git config --global credential.helper store so I only had to enter the PAT once.
+- **Time lost:** 15 min
+
 
 ## Summary
-- Total time spent:~1 hour
-- Was the mini-prototype functional? Partial
-- What I would do differently:  Next time, I will ensure I am working entirely within the WSL (Ubuntu) file system for both the code and the terminal to avoid cross-platform pathing and command-not-found issues with VS Code.
+- Total time spent:~1.5 hours
+- Was the mini-prototype functional? Yes. Redis stores the queue locally, the producer script successfully pushes 3 jobs to the queue, and the consumer script processes them sequentially. The retry logic successfully handles failing jobs using exponential backoff.
+- What I would do differently:  Next time, I will ensure my VS Code default terminal is set to "Ubuntu (WSL)" before starting any development to avoid all cross-platform pathing and command-not-found issues. I will also set up Git credential storage before making my first commit.
 
 
