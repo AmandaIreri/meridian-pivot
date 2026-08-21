@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const attendees = require('../models/attendees');
-const axios = require('axios');
-
-const PRINTER_URL = 'http://localhost:3000/mock-printer/print';
+const printQueue = require('../queue');
 
 router.post('/checkin', async (req, res) => {
     const { attendeeId } = req.body;
@@ -12,22 +10,18 @@ router.post('/checkin', async (req, res) => {
     // 1. Check if attendee exists
     if (!attendee) return res.status(404).json({ error: 'Attendee not found' });
     
-    // 2. Duplicate Protection: Check if already checked in
+    // 2. Duplicate Protection: Check if already fully checked in
     if (attendee.checkedIn) return res.status(409).json({ error: 'Already checked in' });
+    
+    // 3. Prevent duplicate scans while print is pending in the queue
+    if (attendee.badgePrinted) return res.status(409).json({ error: 'Print already in progress' });
 
-    try {
-        // 3. Synchronous: Wait for printer to finish
-        const printResponse = await axios.post(PRINTER_URL, { attendeeId, name: attendee.name });
-        
-        // 4. Mark as checked in
-        if (printResponse.data.status === 'printed') {
-            attendee.checkedIn = true;
-            attendee.badgePrinted = true;
-            return res.json({ attendeeId, status: 'Checked In', badge: 'Printed' });
-        }
-    } catch (err) {
-        return res.status(502).json({ error: 'Printer failed', detail: err.message });
-    }
+    // 4. Lock the attendee state & push to queue
+    attendee.badgePrinted = true;
+    await printQueue.add({ attendeeId, name: attendee.name });
+
+    // 5. Return immediately! Don't wait for the printer.
+    return res.json({ attendeeId, status: 'Printing...' });
 });
 
 module.exports = router;
